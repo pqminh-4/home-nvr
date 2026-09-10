@@ -1,0 +1,58 @@
+{
+  "name": "home-nvr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nền tảng quản lý camera gia đình tự lưu trữ",
+  "bin": {
+    "home-nvr": "scripts/home-nvr.mjs"
+  },
+  "files": [
+    "apps/api/dist/**",
+    "apps/api/package.json",
+    "apps/web/dist/**",
+    "apps/web/package.json",
+    "packages/contracts/dist/**",
+    "packages/contracts/package.json",
+    "scripts/home-nvr.mjs",
+    "scripts/installer-lib.mjs",
+    "scripts/backup.mjs",
+    "scripts/restore.mjs",
+    "scripts/doctor.mjs",
+    "docs/install-ubuntu.md",
+    "docs/remote-access.md",
+    "release-lock.json"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=24.20.0 <25",
+    "npm": ">=11"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @home-nvr/contracts && concurrently -k -n contracts,api,web \"npm run dev -w @home-nvr/contracts\" \"npm run dev -w @home-nvr/api\" \"npm run dev -w @home-nvr/web\"",
+    "build": "npm run build -w @home-nvr/contracts && npm run build -w @home-nvr/api && npm run build -w @home-nvr/web",
+    "typecheck": "npm run build -w @home-nvr/contracts && npm run typecheck --workspaces --if-present && tsc -p tsconfig.tools.json",
+    "test": "npm run build -w @home-nvr/contracts && vitest run",
+    "check": "npm run typecheck && npm test && npm run build",
+    "start": "node --env-file-if-exists=.env apps/api/dist/main.js",
+    "db:migrate": "npm run build -w @home-nvr/contracts && node --env-file-if-exists=.env --import tsx apps/api/src/migrate.ts",
+    "doctor": "node scripts/doctor.mjs",
+    "test:browser": "playwright test",
+    "backup": "node --env-file-if-exists=.env scripts/backup.mjs",
+    "restore": "node --env-file-if-exists=.env scripts/restore.mjs",
+    "installer:plan": "node scripts/home-nvr.mjs plan",
+    "pack:release": "npm run build && npm run sync:release-lock && npm pack --ignore-scripts",
+    "sync:release-lock": "node scripts/sync-release-lock.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.3",
+    "concurrently": "10.0.5",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

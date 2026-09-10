@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "module": "ESNext", "moduleResolution": "Bundler", "noEmit": true, "types": ["node"], "lib": ["ES2023", "DOM"] },
+  "include": ["vitest.config.ts", "playwright.config.ts", "tests/**/*.ts", "packages/contracts/test/**/*.ts"]
+}

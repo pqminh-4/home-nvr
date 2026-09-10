@@ -1,0 +1,18 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { buildApp } from '../src/app.js';
+import { loadConfig } from '../src/config.js';
+import { openDatabase } from '../src/database.js';
+import { createLogger } from '../src/logger.js';
+const cleanup: (() => unknown | Promise<unknown>)[] = [];
+afterEach(async () => { for (const fn of cleanup.splice(0).reverse()) await fn(); });
+async function setup() { const dir = mkdtempSync(join(tmpdir(), 'home-nvr-auth-')); cleanup.push(() => rmSync(dir, { recursive: true, force: true })); const database = openDatabase(dir); cleanup.push(() => database.close()); const config = loadConfig({ NVR_DATA_DIR: dir, NVR_SETUP_TOKEN: 'x'.repeat(40) }); const app = await buildApp(config, { database, logger: createLogger('silent'), serveWeb: false }); cleanup.push(() => app.close()); return { app, config, database }; }
+const origin = 'http://127.0.0.1:5173';
+async function createOwner(app: Awaited<ReturnType<typeof buildApp>>, token: string) { return app.inject({ method: 'POST', url: '/api/v1/auth/setup', payload: { username: 'owner', password: 'a-very-strong-password', setupToken: token } }); }
+describe('auth setup và session', () => {
+  it('tạo owner bằng Argon2id, đọc me và logout bằng cookie', async () => { const { app, config, database } = await setup(); const response = await createOwner(app, config.setupToken); expect(response.statusCode).toBe(201); expect((database.db.prepare("SELECT password_hash FROM users WHERE role='owner'").get() as any).password_hash).toMatch(/^argon2id\$/); const cookie = response.headers['set-cookie']; expect(cookie).toContain('HttpOnly'); expect(cookie).toContain('SameSite=Strict'); expect((await app.inject({ url: '/api/v1/auth/me', headers: { cookie } })).json()).toMatchObject({ username: 'owner', role: 'owner' }); expect((await app.inject({ method: 'POST', url: '/api/v1/auth/logout', headers: { origin, cookie } })).statusCode).toBe(204); });
+  it('chặn CSRF và giới hạn thử sai đăng nhập', async () => { const { app, config } = await setup(); const setupResponse = await createOwner(app, config.setupToken); expect((await app.inject({ method: 'POST', url: '/api/v1/auth/logout', headers: { cookie: setupResponse.headers['set-cookie'] } })).statusCode).toBe(403); for (let attempt = 0; attempt < 5; attempt++) expect((await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { username: 'owner', password: 'wrong' } })).statusCode).toBe(401); expect((await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { username: 'owner', password: 'wrong' } })).statusCode).toBe(429); });
+  it('thu hồi quyền ngay khi guest hết hạn', async () => { const { app, config, database } = await setup(); const owner = await createOwner(app, config.setupToken); const expiresAt = new Date(Date.now() + 86_400_000).toISOString(); expect((await app.inject({ method: 'POST', url: '/api/v1/users', headers: { origin, cookie: owner.headers['set-cookie'] }, payload: { username: 'guest', password: 'guest-password-strong', expiresAt, cameraIds: [] } })).statusCode).toBe(201); const login = await app.inject({ method: 'POST', url: '/api/v1/auth/login', payload: { username: 'guest', password: 'guest-password-strong' } }); expect(login.statusCode).toBe(200); database.db.prepare("UPDATE users SET expires_at='2020-01-01T00:00:00.000Z' WHERE username='guest'").run(); expect((await app.inject({ url: '/api/v1/auth/me', headers: { cookie: login.headers['set-cookie'] } })).statusCode).toBe(401); });
+});

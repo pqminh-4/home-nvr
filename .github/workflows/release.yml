@@ -1,0 +1,32 @@
+name: Phat hanh Home NVR
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run sync:release-lock
+      - name: Dong goi CLI va runtime
+        run: |
+          mkdir -p release
+          npm pack --ignore-scripts --pack-destination release
+          mv release/home-nvr-*.tgz release/home-nvr-linux.tgz
+          npm exec --yes --package="$(pwd)/release/home-nvr-linux.tgz" -- home-nvr plan
+      - name: Tao GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/home-nvr-linux.tgz --verify-tag --generate-notes --title "Home NVR $GITHUB_REF_NAME"

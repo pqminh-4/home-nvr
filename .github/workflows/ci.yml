@@ -1,0 +1,50 @@
+name: Kiem tra nen tang
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  check:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run db:migrate
+      - run: npm run db:migrate
+      - run: npm run sync:release-lock -- --check
+      - run: npm run installer:plan
+      - if: runner.os == 'Linux'
+        run: npx playwright install --with-deps chromium
+      - if: runner.os == 'Linux'
+        run: npm run test:browser
+  installer-smoke:
+    needs: check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run sync:release-lock
+      - name: Dong goi va cai tren Ubuntu runner
+        run: |
+          mkdir -p /tmp/home-nvr-release
+          npm pack --ignore-scripts --pack-destination /tmp/home-nvr-release
+          PACKAGE_FILE="$(find /tmp/home-nvr-release -maxdepth 1 -name 'home-nvr-*.tgz' -print -quit)"
+          sudo env PATH="$PATH" npm exec --yes --package="$PACKAGE_FILE" -- home-nvr install
+          curl --fail --retry 5 --retry-delay 1 http://127.0.0.1:3000/health/ready
+          sudo home-nvr status
+          sudo env PATH="$PATH" npm exec --yes --package="$PACKAGE_FILE" -- home-nvr update
+          sudo home-nvr rollback
+          curl --fail http://127.0.0.1:3000/health/ready
+          sudo home-nvr uninstall --purge --yes
