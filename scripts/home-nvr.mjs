@@ -50,14 +50,16 @@ function commandAvailable(command, args = ['--version']) {
   return !result.error && result.status === 0;
 }
 
-async function assertUbuntuRoot() {
+async function assertUbuntuRoot(options = {}) {
   if (process.platform !== 'linux') throw new Error('Installer chỉ chạy trên Ubuntu Linux.');
   if (typeof process.getuid !== 'function' || process.getuid() !== 0) throw new Error('Hãy chạy installer bằng sudo.');
   const osRelease = await readFile('/etc/os-release', 'utf8');
   if (!/^ID=ubuntu$/m.test(osRelease)) throw new Error('Installer hiện chỉ hỗ trợ Ubuntu.');
   if (Number(process.versions.node.split('.')[0]) !== 24) throw new Error('Cần Node.js 24 trước khi cài Home NVR.');
-  const npmResult = runNpm(['--version'], { capture: true });
-  if (Number(String(npmResult.stdout).trim().split('.')[0]) < 11) throw new Error('Cần npm 11 trở lên.');
+  if (options.requireNpm) {
+    const npmResult = runNpm(['--version'], { capture: true });
+    if (Number(String(npmResult.stdout).trim().split('.')[0]) < 11) throw new Error('Cần npm 11 trở lên.');
+  }
   for (const command of ['apt-get', 'systemctl', 'tar']) {
     if (!commandAvailable(command, command === 'apt-get' ? ['--version'] : ['--version'])) throw new Error(`Thiếu công cụ hệ thống: ${command}.`);
   }
@@ -244,7 +246,7 @@ async function pruneReleases(layout, keepPaths) {
 }
 
 async function installOrUpdate() {
-  await assertUbuntuRoot();
+  await assertUbuntuRoot({ requireNpm: true });
   const source = await validateReleaseSource(packageRoot);
   const layout = createInstallLayout('/');
   if (isInside(layout.releases, source.root)) throw new Error('Để cập nhật, hãy chạy lại lệnh npm exec từ GitHub Releases.');
