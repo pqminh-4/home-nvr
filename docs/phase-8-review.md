@@ -37,7 +37,7 @@ Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; re
 
 - Máy Windows không có WSL/Ubuntu/systemd nên chưa chạy được installer mutation, reboot hoặc service hardening thật.
 - Repository phát hành được tạo riêng tại `pqminh-4/home-nvr`; không ghi đè các repository camera hiện hữu.
-- Workflow Ubuntu và workflow phát hành chỉ chạy sau khi source được đẩy lên repository.
+- Source đã được đẩy lên nhánh `main`; workflow Ubuntu đang được kiểm tra trên GitHub Actions. Workflow phát hành sẽ chạy khi tạo tag `v*`.
 - Chưa có bài chạy 24 giờ, đầy ổ, nhiều camera, reboot và update/rollback trên máy Ubuntu đích vì cấu hình máy vẫn chưa xác nhận.
 
 ## Điểm dừng
