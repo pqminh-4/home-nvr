@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { access, chmod, copyFile, cp, lstat, mkdir, mkdtemp, readFile, readlink, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import {
   APP_NAME,
   MEDIAMTX_VERSION,
@@ -365,9 +365,7 @@ async function main() {
   if (!['help', '--help', '-h'].includes(command)) process.exitCode = 1;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  main().catch(error => {
-    console.error(error instanceof Error ? error.message : 'Installer Home NVR thất bại.');
-    process.exitCode = 1;
-  });
-}
+main().catch(error => {
+  console.error(error instanceof Error ? error.message : 'Installer Home NVR thất bại.');
+  process.exitCode = 1;
+});
