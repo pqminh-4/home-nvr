@@ -1,6 +1,6 @@
 # Review Phần 8 — installer Ubuntu và phát hành
 
-Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; repository phát hành đã được chọn, đang chờ CI và máy Ubuntu để nghiệm thu thực địa**.
+Trạng thái: **đã hoàn thành triển khai, review cục bộ và CI Ubuntu; đang chờ máy Ubuntu đích để nghiệm thu thực địa dài hạn**.
 
 ## Kết quả triển khai
 
@@ -24,6 +24,10 @@ Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; re
 | Tunnel token root 0600 không đọc được dưới user `home-nvr` | Thư mục root:home-nvr 0750, token root:home-nvr 0640 |
 | `uninstall --purge` kiểm tra `--yes` sau khi đã gỡ service | Chuyển validation lên trước mọi mutation |
 | Smoke test Windows truyền sai thuộc tính đường dẫn tarball | Gán đường dẫn tuyệt đối trước khi gọi npm exec |
+| npm gọi CLI qua shim nên phép so sánh entrypoint bỏ qua toàn bộ lệnh | Chuyển CLI thành entrypoint thực thi trực tiếp và xác minh bằng tarball thật |
+| `Array.map(resolve)` truyền cả chỉ số và mảng vào `path.resolve` | Dùng callback một tham số khi chuẩn hóa danh sách release cần giữ |
+| `sudo home-nvr` chọn sai Node từ `secure_path` | Launcher cài đặt ghim đúng Node 24 đã dùng khi cài service |
+| Lệnh rollback không cần npm nhưng vẫn bị chặn bởi npm hệ thống cũ | Chỉ yêu cầu npm 11 cho install/update |
 
 ## Kiểm tra đã đạt
 
@@ -32,14 +36,15 @@ Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; re
 - `npm pack --dry-run`: tarball 38 file, khoảng 365 kB nén/1,3 MB giải nén; có API, web, contracts, CLI, tài liệu và release lock.
 - Smoke test tạo tarball thật rồi chạy `npm exec --package=<tarball> -- home-nvr plan`: đạt trên máy phát triển.
 - Secret cục bộ, `.env`, certificate, private key và tarball không xuất hiện trong danh sách Git nhờ `.gitignore`.
+- GitHub Actions run `34590750619`: Ubuntu, Windows, browser tests và installer smoke đều đạt. Smoke test đã chạy thật `install → health → status → update → rollback → health → uninstall --purge` trên Ubuntu 24.04.
 
-## Chưa thể nghiệm thu trong môi trường hiện tại
+## Nghiệm thu còn lại trên máy đích
 
 - Máy Windows không có WSL/Ubuntu/systemd nên chưa chạy được installer mutation, reboot hoặc service hardening thật.
 - Repository phát hành được tạo riêng tại `pqminh-4/home-nvr`; không ghi đè các repository camera hiện hữu.
-- Source đã được đẩy lên nhánh `main`; workflow Ubuntu đang được kiểm tra trên GitHub Actions. Workflow phát hành sẽ chạy khi tạo tag `v*`.
+- Source đã được đẩy lên nhánh `main`; CI Ubuntu đã đạt. Workflow phát hành sẽ chạy khi tạo tag `v*`.
 - Chưa có bài chạy 24 giờ, đầy ổ, nhiều camera, reboot và update/rollback trên máy Ubuntu đích vì cấu hình máy vẫn chưa xác nhận.
 
 ## Điểm dừng
 
-Cần CI trên repository mới chạy đạt và cung cấp máy Ubuntu để nghiệm thu cuối. Chỉ tạo tag/release sau khi kết quả CI đạt.
+Cần cung cấp máy Ubuntu đích để chạy reboot, tải camera thật, đầy ổ giả lập và soak test 24 giờ. Chỉ tạo tag/release sau khi người dùng duyệt kết quả nghiệm thu này.
