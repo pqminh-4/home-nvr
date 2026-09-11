@@ -235,7 +235,7 @@ async function pruneReleases(layout, keepPaths) {
     candidates.push({ path, modified: info.mtimeMs });
   }
   candidates.sort((a, b) => b.modified - a.modified);
-  const keep = new Set([...keepPaths.filter(Boolean).map(resolve), ...candidates.slice(0, 3).map(item => resolve(item.path))]);
+  const keep = new Set([...keepPaths.filter(Boolean).map(item => resolve(item)), ...candidates.slice(0, 3).map(item => resolve(item.path))]);
   for (const item of candidates) {
     if (!keep.has(resolve(item.path)) && isInside(layout.releases, item.path)) await rm(item.path, { recursive: true, force: true });
   }
