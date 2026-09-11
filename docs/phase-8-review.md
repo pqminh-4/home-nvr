@@ -1,6 +1,6 @@
 # Review Phần 8 — installer Ubuntu và phát hành
 
-Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; đang chờ repository phát hành và máy Ubuntu để nghiệm thu thực địa**.
+Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; repository phát hành đã được chọn, đang chờ CI và máy Ubuntu để nghiệm thu thực địa**.
 
 ## Kết quả triển khai
 
@@ -36,10 +36,10 @@ Trạng thái: **đã hoàn thành phần triển khai và review cục bộ; đ
 ## Chưa thể nghiệm thu trong môi trường hiện tại
 
 - Máy Windows không có WSL/Ubuntu/systemd nên chưa chạy được installer mutation, reboot hoặc service hardening thật.
-- Git repository cục bộ chưa có remote. Tài khoản GitHub có nhiều repository camera khác nhau; không tự chọn hoặc ghi đè repository hiện hữu.
+- Repository phát hành được tạo riêng tại `pqminh-4/home-nvr`; không ghi đè các repository camera hiện hữu.
 - Workflow Ubuntu và workflow phát hành chỉ chạy sau khi source được đẩy lên repository.
 - Chưa có bài chạy 24 giờ, đầy ổ, nhiều camera, reboot và update/rollback trên máy Ubuntu đích vì cấu hình máy vẫn chưa xác nhận.
 
 ## Điểm dừng
 
-Cần chọn repository GitHub dành riêng cho mã nguồn này và cung cấp máy Ubuntu để chạy nghiệm thu cuối. Chỉ tạo tag/release công khai sau khi người dùng duyệt repository đích và kết quả CI.
+Cần CI trên repository mới chạy đạt và cung cấp máy Ubuntu để nghiệm thu cuối. Chỉ tạo tag/release sau khi kết quả CI đạt.

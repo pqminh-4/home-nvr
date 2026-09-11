@@ -4,10 +4,10 @@ Home NVR hỗ trợ Ubuntu 24.04 trên `x64` và `arm64`. Máy cần có Node.js
 
 ## Cài bằng một dòng từ GitHub Releases
 
-Sau khi repository và release `v0.1.0` được xuất bản, thay `CHU_SO_HUU/KHO_MA` bằng repository thật:
+Sau khi release `v0.1.0` được xuất bản, cài Home NVR bằng lệnh sau:
 
 ```bash
-sudo npm exec --yes --prefer-online --package=https://github.com/CHU_SO_HUU/KHO_MA/releases/latest/download/home-nvr-linux.tgz -- home-nvr install
+sudo npm exec --yes --prefer-online --package=https://github.com/pqminh-4/home-nvr/releases/latest/download/home-nvr-linux.tgz -- home-nvr install
 ```
 
 Lệnh tải tarball đã build từ GitHub Release, cài dependencies production đúng lockfile, tải MediaMTX và cloudflared từ release chính thức rồi kiểm tra SHA-256 trước khi kích hoạt service. Installer in setup token đúng một lần ở kết quả cài mới; lưu token để tạo tài khoản owner.
@@ -44,7 +44,7 @@ sudo home-nvr rollback
 Cập nhật bằng chính lệnh npm một dòng ở trên và đổi `install` thành `update`. Installer tạo release mới trước, chuyển symlink rồi chờ `/health/ready`. Nếu release mới không sẵn sàng trong 30 giây, symlink tự quay về release trước và systemd khởi động lại bản cũ.
 
 ```bash
-sudo npm exec --yes --prefer-online --package=https://github.com/CHU_SO_HUU/KHO_MA/releases/latest/download/home-nvr-linux.tgz -- home-nvr update
+sudo npm exec --yes --prefer-online --package=https://github.com/pqminh-4/home-nvr/releases/latest/download/home-nvr-linux.tgz -- home-nvr update
 ```
 
 Rollback thủ công đổi qua lại giữa release hiện tại và release trước. Dữ liệu nằm ngoài release nên không bị ghi đè. Migration hiện tại chỉ bổ sung schema; trước một nâng cấp lớn vẫn nên chạy `sudo home-nvr backup`.
