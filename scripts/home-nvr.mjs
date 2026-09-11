@@ -72,6 +72,10 @@ async function writeAtomic(path, content, mode = 0o600) {
   await rename(temporary, path);
 }
 
+function quoteShell(value) {
+  return `'${String(value).split("'").join("'\"'\"'")}'`;
+}
+
 async function installSystemDependencies() {
   if (commandAvailable('ffmpeg', ['-version']) && commandAvailable('tar')) return;
   run('apt-get', ['update']);
@@ -188,12 +192,10 @@ async function switchRelease(layout, target) {
   await rename(temporary, layout.current);
 }
 
-async function linkCli(layout) {
-  await mkdir(dirname(layout.cli), { recursive: true, mode: 0o755 });
-  const temporary = `${layout.cli}.tmp-${process.pid}`;
-  await rm(temporary, { force: true });
-  await symlink(join(layout.current, 'scripts/home-nvr.mjs'), temporary, 'file');
-  await rename(temporary, layout.cli);
+async function linkCli(layout, nodePath = process.execPath) {
+  const scriptPath = join(layout.current, 'scripts/home-nvr.mjs');
+  const launcher = `#!/bin/sh\nexec ${quoteShell(nodePath)} ${quoteShell(scriptPath)} "$@"\n`;
+  await writeAtomic(layout.cli, launcher, 0o755);
 }
 
 async function readState(layout) {
